@@ -53,14 +53,14 @@ AppState processAppState(AppState *currentAppState, u32 keysPressedBefore, u32 k
     UNUSED(keysPressedBefore);
     //UNUSED(keysPressedNow);
     AppState nextAppState = *currentAppState;
-    if (KEY_DOWN(BUTTON_A, keysPressedNow)) {
+    if (KEY_DOWN(BUTTON_LEFT, keysPressedNow)) {
         nextAppState.thePlayerCharacter->xvel = -1;
-    } else if (KEY_DOWN(BUTTON_B, keysPressedNow)) {
+    } else if (KEY_DOWN(BUTTON_RIGHT, keysPressedNow)) {
         nextAppState.thePlayerCharacter->xvel = 1;
     } else {
         nextAppState.thePlayerCharacter->xvel = 0;
     }
-    if (vBlankCounter % 4 == 0) {
+    if (vBlankCounter % 2 == 0) {
         if (nextAppState.thePlayerCharacter->xvel > 0) {
             nextAppState.thePlayerCharacter->xpos++;
         } else if ((nextAppState.thePlayerCharacter->xvel < 0)) {
