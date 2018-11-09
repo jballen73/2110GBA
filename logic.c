@@ -1,5 +1,6 @@
 #include "logic.h"
 #include "images/basicScreen.h"
+#include "images/playerChar.h"
 #include <stdlib.h>
 //extern volatile OamEntry* shadow;
 void initializeAppState(AppState* appState) {
@@ -12,6 +13,7 @@ void initializeAppState(AppState* appState) {
     newPlayerCharacter->xpos = 30;
     newPlayerCharacter->ypos = 100;
     newPlayerCharacter->doubleJump = 1;
+    newPlayerCharacter->airFrames = 0;
     appState->thePlayerCharacter = newPlayerCharacter;
     appState->backgroundImage = basicScreen;
     appState->gameOver = 0;
@@ -25,6 +27,18 @@ void initializeAppState(AppState* appState) {
 // static Snake processSnake(Snake* currentSnake);
 // static void generateRandomFoods(AppState* currentAppState, AppState* nextAppState);
 
+static u16 getBackgroundPixel(AppState *state, int xpos, int ypos) {
+    return state->backgroundImage[OFFSET(ypos, xpos, WIDTH)];
+}
+
+static int checkGroundCollision(AppState *state) {
+    int result = 0;
+    for (int i = 0; i < 16; i++) {
+        result = result | (getBackgroundPixel(state, state->thePlayerCharacter->xpos + i,
+        state->thePlayerCharacter->ypos + 16) == 0x000);
+    }
+    return result;
+}
 // This function processes your current app state and returns the new (i.e. next)
 // state of your application.
 AppState processAppState(AppState *currentAppState, u32 keysPressedBefore, u32 keysPressedNow) {
@@ -50,7 +64,7 @@ AppState processAppState(AppState *currentAppState, u32 keysPressedBefore, u32 k
      * Modifying the currentAppState will mean the undraw function will not be able
      * to undraw it later.
      */
-    UNUSED(keysPressedBefore);
+    // UNUSED(keysPressedBefore);
     //UNUSED(keysPressedNow);
     AppState nextAppState = *currentAppState;
     if (KEY_DOWN(BUTTON_LEFT, keysPressedNow)) {
@@ -60,11 +74,46 @@ AppState processAppState(AppState *currentAppState, u32 keysPressedBefore, u32 k
     } else {
         nextAppState.thePlayerCharacter->xvel = 0;
     }
-    if (vBlankCounter % 2 == 0) {
+    if (vBlankCounter % 1 == 0) {
         if (nextAppState.thePlayerCharacter->xvel > 0) {
             nextAppState.thePlayerCharacter->xpos++;
         } else if ((nextAppState.thePlayerCharacter->xvel < 0)) {
             nextAppState.thePlayerCharacter->xpos--;
+        }
+    }
+
+    if (checkGroundCollision(currentAppState) == 1) {
+        nextAppState.thePlayerCharacter->yvel = 0;
+        nextAppState.thePlayerCharacter->doubleJump = 1;
+    } else {
+        if (currentAppState->thePlayerCharacter->airFrames >= 7) {
+            nextAppState.thePlayerCharacter->yvel--;
+            if (nextAppState.thePlayerCharacter->yvel < -2) {
+                nextAppState.thePlayerCharacter->yvel = -2;
+            }
+            nextAppState.thePlayerCharacter->airFrames = 0;
+        } else {
+            nextAppState.thePlayerCharacter->airFrames++;
+        }
+    }
+    if (KEY_JUST_PRESSED(BUTTON_A, keysPressedNow, keysPressedBefore)) {
+        if (checkGroundCollision(currentAppState)) {
+            nextAppState.thePlayerCharacter->yvel = 2;
+            nextAppState.thePlayerCharacter->airFrames = 0;
+        } else if (currentAppState->thePlayerCharacter->doubleJump) {
+            nextAppState.thePlayerCharacter->yvel = 2;
+            nextAppState.thePlayerCharacter->airFrames = 0;
+            nextAppState.thePlayerCharacter->doubleJump = 0;
+        }
+    }
+    if (nextAppState.thePlayerCharacter->yvel != 0) {
+        int signy = (nextAppState.thePlayerCharacter->yvel > 0) ? 1 : -1;
+        if (abs(nextAppState.thePlayerCharacter->yvel) == 2) {
+            nextAppState.thePlayerCharacter->ypos -= signy;
+        } else {
+            if (nextAppState.thePlayerCharacter->airFrames % 2 == 0) {
+                nextAppState.thePlayerCharacter->ypos -=signy;
+            }
         }
     }
     return nextAppState;

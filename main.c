@@ -42,7 +42,7 @@ int main(void) {
         case START:
             // Wait for vblank
             waitForVBlank();
-
+            graphicsInit();
             // TA-TODO: Draw the start state here.
             
             fillScreenDMA(BLUE);
@@ -51,13 +51,13 @@ int main(void) {
         case START_NODRAW:
             // TA-TODO: Check for a button press here to start the app.
             // Start the app by switching the state to APP_INIT.
-            if (KEY_JUST_PRESSED(BUTTON_SELECT, currentButtons, previousButtons)) {
+            if (KEY_JUST_PRESSED(BUTTON_START, currentButtons, previousButtons)) {
                 state = APP_INIT;
             }
             break;
         case APP_INIT:
             // Initialize the app. Switch to the APP state.
-            graphicsInit();
+            //graphicsInit();
             initializeAppState(&currentAppState);
 
             // Draw the initial state of the app
@@ -66,6 +66,10 @@ int main(void) {
             break;
         case APP:
             // Process the app for one frame, store the next state
+            if (KEY_JUST_PRESSED(BUTTON_SELECT, currentButtons, previousButtons)) {
+                state = START;
+                break;
+            }
             nextAppState = processAppState(&currentAppState, previousButtons, currentButtons);
 
             // Wait for vblank before we do any drawing.

@@ -14,6 +14,7 @@ typedef struct thechar{
     int xpos;
     int ypos;
     int doubleJump;
+    int airFrames;
 } Character;
 
 

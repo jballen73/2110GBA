@@ -58,7 +58,7 @@ extern volatile unsigned short *videoBuffer;
 #define BUTTONS *(volatile u32 *)0x4000130
 #define KEY_DOWN(key, buttons)  (~(buttons) & (key))
 
-#define KEY_JUST_PRESSED(key, buttons, oldbuttons) (KEY_DOWN(key, buttons)) & ~(KEY_DOWN(key, oldbuttons))
+#define KEY_JUST_PRESSED(key, buttons, oldbuttons) (((KEY_DOWN(key, buttons))) & ~(KEY_DOWN(key, oldbuttons)))
 
 // ---------------------------------------------------------------------------
 //                       DMA

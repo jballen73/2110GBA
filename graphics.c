@@ -9,6 +9,11 @@
 
 volatile OamEntry shadow[128];
 volatile OamEntry* playerCharacter = shadow;
+void hideSprites(void) {
+    for(int i = 0; i < 128; i++) {
+        shadow[i].attr0 = ATTR0_HIDE;
+    }
+}
 void graphicsInit(void) {
     DMA[3].src = playerChar_palette;
     DMA[3].dst = SPRITEPAL;
@@ -18,9 +23,7 @@ void graphicsInit(void) {
     DMA[3].dst = &CHARBLOCKBASE[5];
     DMA[3].cnt = PLAYERCHAR_LENGTH | DMA_ON;
 
-    for(int i = 0; i < 128; i++) {
-        shadow[i].attr0 = ATTR0_HIDE;
-    }
+    hideSprites();
     playerCharacter = shadow;
     playerCharacter->attr0 = 50 | PLAYERCHAR_PALETTE_TYPE | PLAYERCHARACTERSPRITE_SPRITE_SHAPE;
     playerCharacter->attr1 = 50 | PLAYERCHARACTERSPRITE_SPRITE_SIZE;
@@ -42,6 +45,7 @@ static void drawPlayer(int xpos, int ypos) {
     DMA[3].dst = OAMMEM;
     DMA[3].cnt = 128*2 | DMA_ON;
 }
+
 // This function will be used to draw everything about the app
 // including the background and whatnot.
 void fullDrawAppState(AppState *state) {
