@@ -93,8 +93,8 @@ int main(void) {
             waitForVBlank();
 
             // TA-TODO: Draw the exit / gameover screen
-
-            state = APP_EXIT_NODRAW;
+            state = START;
+            //state = APP_EXIT_NODRAW;
             break;
         case APP_EXIT_NODRAW:
             // TA-TODO: Check for a button press here to go back to the start screen

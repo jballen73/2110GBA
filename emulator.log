@@ -18,9 +18,9 @@ Starting Mednafen 0.9.48
    Loading override settings from "/home/jballen73/.mednafen/pgconfig/IWannaBeTheStudent.gba.cfg"...
     Failed: Error opening file "/home/jballen73/.mednafen/pgconfig/IWannaBeTheStudent.gba.cfg": No such file or directory
 
-   ROM:       100KiB
-   ROM CRC32: 0xb8746a63
-   ROM MD5:   0xe6d197b513a99f1f2b43f0fc44e9379c
+   ROM:       250KiB
+   ROM CRC32: 0x79b0f8b7
+   ROM MD5:   0x557a8f15517689cd36c72e0a593a31c7
 
   Loading custom palette from "/home/jballen73/.mednafen/palettes/gba.pal"...
    Error: Error opening file "/home/jballen73/.mednafen/palettes/gba.pal": No such file or directory

@@ -1,5 +1,6 @@
 #include "logic.h"
 #include "images/basicScreen.h"
+#include "images/jumpScreen.h"
 #include "images/playerChar.h"
 #include <stdlib.h>
 //extern volatile OamEntry* shadow;
@@ -15,7 +16,8 @@ void initializeAppState(AppState* appState) {
     newPlayerCharacter->doubleJump = 1;
     newPlayerCharacter->airFrames = 0;
     appState->thePlayerCharacter = newPlayerCharacter;
-    appState->backgroundImage = basicScreen;
+    appState->backgroundImage = jumpScreen;
+    appState->collisionMap = jumpScreenCollision;
     appState->gameOver = 0;
 }
 
@@ -28,14 +30,36 @@ void initializeAppState(AppState* appState) {
 // static void generateRandomFoods(AppState* currentAppState, AppState* nextAppState);
 
 static u16 getBackgroundPixel(AppState *state, int xpos, int ypos) {
-    return state->backgroundImage[OFFSET(ypos, xpos, WIDTH)];
+    return state->collisionMap[OFFSET(ypos, xpos, WIDTH)];
 }
 
 static int checkGroundCollision(AppState *state) {
     int result = 0;
     for (int i = 0; i < 16; i++) {
-        result = result | (getBackgroundPixel(state, state->thePlayerCharacter->xpos + i,
-        state->thePlayerCharacter->ypos + 16) == 0x000);
+        u16 pixel = getBackgroundPixel(state, state->thePlayerCharacter->xpos + i,
+        state->thePlayerCharacter->ypos + 16);
+        result = result | (pixel == 0x0000) | ((pixel == GROUND_KILL_VALUE) << 1);
+        
+    }
+    return result;
+}
+static int checkLeftCollision(AppState *state) {
+    int result = 0;
+    for (int i = 0; i < 16; i++) {
+        u16 pixel = getBackgroundPixel(state, state->thePlayerCharacter->xpos - 1,
+        state->thePlayerCharacter->ypos + i);
+        result = result | (pixel == 0x0000) | ((pixel == GROUND_KILL_VALUE) << 1);
+        
+    }
+    return result;
+}
+static int checkRightCollision(AppState *state) {
+    int result = 0;
+    for (int i = 0; i < 16; i++) {
+        u16 pixel = getBackgroundPixel(state, state->thePlayerCharacter->xpos + 16,
+        state->thePlayerCharacter->ypos + i);
+        result = result | (pixel == 0x0000) | ((pixel == GROUND_KILL_VALUE) << 1);
+        
     }
     return result;
 }
@@ -67,11 +91,16 @@ AppState processAppState(AppState *currentAppState, u32 keysPressedBefore, u32 k
     // UNUSED(keysPressedBefore);
     //UNUSED(keysPressedNow);
     AppState nextAppState = *currentAppState;
-    if (KEY_DOWN(BUTTON_LEFT, keysPressedNow)) {
+    if (KEY_DOWN(BUTTON_LEFT, keysPressedNow) ) {
         nextAppState.thePlayerCharacter->xvel = -1;
     } else if (KEY_DOWN(BUTTON_RIGHT, keysPressedNow)) {
         nextAppState.thePlayerCharacter->xvel = 1;
     } else {
+        nextAppState.thePlayerCharacter->xvel = 0;
+    }
+    if (nextAppState.thePlayerCharacter->xvel < 0 && ((checkLeftCollision(currentAppState) & GROUND_REGULAR))) {
+        nextAppState.thePlayerCharacter->xvel = 0;
+    } else if ((nextAppState.thePlayerCharacter->xvel > 0)&& ((checkRightCollision(currentAppState) & GROUND_REGULAR))) {
         nextAppState.thePlayerCharacter->xvel = 0;
     }
     if (vBlankCounter % 1 == 0) {
@@ -81,8 +110,11 @@ AppState processAppState(AppState *currentAppState, u32 keysPressedBefore, u32 k
             nextAppState.thePlayerCharacter->xpos--;
         }
     }
-
-    if (checkGroundCollision(currentAppState) == 1) {
+    if (checkGroundCollision(currentAppState) & GROUND_KILL) {
+        nextAppState.gameOver = 1;
+        return nextAppState;
+    }
+    if (checkGroundCollision(currentAppState) & GROUND_REGULAR) {
         nextAppState.thePlayerCharacter->yvel = 0;
         nextAppState.thePlayerCharacter->doubleJump = 1;
     } else {

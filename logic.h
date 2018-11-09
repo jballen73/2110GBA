@@ -3,11 +3,11 @@
 
 #include "gba.h"
 
+#define GROUND_NONE (0)
+#define GROUND_REGULAR (1)
+#define GROUND_KILL (1<<1)
 
-
-
-
-
+#define GROUND_KILL_VALUE (0x107d)
 typedef struct thechar{
     int xvel;
     int yvel;
@@ -35,6 +35,7 @@ typedef struct {
     */
    Character* thePlayerCharacter;
    const u16 *backgroundImage;
+   const u16 *collisionMap;
 } AppState;
 
 /*
