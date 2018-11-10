@@ -50,7 +50,7 @@ static void drawPlayer(int xpos, int ypos) {
 // including the background and whatnot.
 void fullDrawAppState(AppState *state) {
     // TA-TODO: IMPLEMENT.
-    drawFullScreenImageDMA(state->backgroundImage);
+    drawFullScreenImageDMA(state->room.backgroundImage);
     drawPlayer(state->thePlayerCharacter->xpos, state->thePlayerCharacter->ypos);
 }
 
@@ -65,6 +65,10 @@ void undrawAppState(AppState *state) {
 // For example, in a Snake game, draw the snake, the food, the score.
 void drawAppState(AppState *state) {
     // TA-TODO: IMPLEMENT.
+    //if (state->levelChange > 0) {
+        drawFullScreenImageDMA(state->room.backgroundImage);
+       // state->levelChange--;
+    //}
     drawPlayer(state->thePlayerCharacter->xpos, state->thePlayerCharacter->ypos);
 }
 

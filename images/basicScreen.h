@@ -14,6 +14,7 @@
 #define BASICSCREEN_H
 
 extern const unsigned short basicScreen[38400];
+extern const unsigned short basicScreenCollision[38400];
 #define BASICSCREEN_SIZE 76800
 #define BASICSCREEN_LENGTH 38400
 #define BASICSCREEN_WIDTH 240

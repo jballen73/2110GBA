@@ -1,13 +1,23 @@
 #include "logic.h"
+#include "graphics.h"
 #include "images/basicScreen.h"
 #include "images/jumpScreen.h"
 #include "images/playerChar.h"
 #include <stdlib.h>
 //extern volatile OamEntry* shadow;
+static Room *gameRooms;
 void initializeAppState(AppState* appState) {
     // TA-TODO: Initialize everything that's part of this AppState struct here.
     // Suppose the struct contains random values, make sure everything gets
     // the value it should have when the app begins.
+    gameRooms = (Room*)malloc(3 * sizeof(Room));
+    gameRooms[0].backgroundImage = basicScreen;
+    gameRooms[0].collisionMap = basicScreenCollision;
+    gameRooms[1].backgroundImage = jumpScreen;
+    gameRooms[1].collisionMap = jumpScreenCollision;
+    gameRooms[2].backgroundImage = basicScreen;
+    gameRooms[2].collisionMap = basicScreenCollision;
+
     Character *newPlayerCharacter =  (Character*)malloc(sizeof(Character));
     newPlayerCharacter->xvel = 0;
     newPlayerCharacter->yvel = 0;
@@ -16,9 +26,10 @@ void initializeAppState(AppState* appState) {
     newPlayerCharacter->doubleJump = 1;
     newPlayerCharacter->airFrames = 0;
     appState->thePlayerCharacter = newPlayerCharacter;
-    appState->backgroundImage = jumpScreen;
-    appState->collisionMap = jumpScreenCollision;
+    appState->roomNum = 0;
+    appState->room = gameRooms[appState->roomNum];
     appState->gameOver = 0;
+    appState->levelChange = 0;
 }
 
 // TA-TODO: Add any process functions for sub-elements of your app here.
@@ -30,17 +41,21 @@ void initializeAppState(AppState* appState) {
 // static void generateRandomFoods(AppState* currentAppState, AppState* nextAppState);
 
 static u16 getBackgroundPixel(AppState *state, int xpos, int ypos) {
-    return state->collisionMap[OFFSET(ypos, xpos, WIDTH)];
+    return state->room.collisionMap[OFFSET(ypos, xpos, WIDTH)];
 }
 
-static int checkGroundCollision(AppState *state) {
-    int result = 0;
+static u16 checkGroundCollision(AppState *state) {
+    u16 result = 0;
     for (int i = 0; i < 16; i++) {
         u16 pixel = getBackgroundPixel(state, state->thePlayerCharacter->xpos + i,
         state->thePlayerCharacter->ypos + 16);
-        result = result | (pixel == 0x0000) | ((pixel == GROUND_KILL_VALUE) << 1);
+        result = result | (pixel == 0x0000);
+        result = result | ((pixel == GROUND_KILL_VALUE) <<4);
         
     }
+    // if (result & GROUND_KILL) {
+    //     state->room = gameRooms[1];
+    // }
     return result;
 }
 static int checkLeftCollision(AppState *state) {
@@ -48,7 +63,7 @@ static int checkLeftCollision(AppState *state) {
     for (int i = 0; i < 16; i++) {
         u16 pixel = getBackgroundPixel(state, state->thePlayerCharacter->xpos - 1,
         state->thePlayerCharacter->ypos + i);
-        result = result | (pixel == 0x0000) | ((pixel == GROUND_KILL_VALUE) << 1);
+        result = result | (pixel == 0x0000) | ((pixel == GROUND_KILL_VALUE) << 1) | ((pixel == WALL_BACK) << 2);
         
     }
     return result;
@@ -58,7 +73,7 @@ static int checkRightCollision(AppState *state) {
     for (int i = 0; i < 16; i++) {
         u16 pixel = getBackgroundPixel(state, state->thePlayerCharacter->xpos + 16,
         state->thePlayerCharacter->ypos + i);
-        result = result | (pixel == 0x0000) | ((pixel == GROUND_KILL_VALUE) << 1);
+        result = result | (pixel == 0x0000) | ((pixel == GROUND_KILL_VALUE) << 1) | ((pixel == WALL_ADVANCE) << 3);
         
     }
     return result;
@@ -105,12 +120,26 @@ AppState processAppState(AppState *currentAppState, u32 keysPressedBefore, u32 k
     }
     if (vBlankCounter % 1 == 0) {
         if (nextAppState.thePlayerCharacter->xvel > 0) {
-            nextAppState.thePlayerCharacter->xpos++;
+            if (checkRightCollision(currentAppState) & COLLISION_ADVANCE) {
+                nextAppState.roomNum = (nextAppState.roomNum + 1) % NUM_ROOMS;
+                nextAppState.room = gameRooms[nextAppState.roomNum];
+                nextAppState.thePlayerCharacter->xpos = 2;
+                nextAppState.levelChange = 5;
+            } else {
+                nextAppState.thePlayerCharacter->xpos++;
+            }
         } else if ((nextAppState.thePlayerCharacter->xvel < 0)) {
-            nextAppState.thePlayerCharacter->xpos--;
+            if (checkLeftCollision(currentAppState) & COLLISION_BACK) {
+                nextAppState.roomNum = (nextAppState.roomNum - 1);
+                nextAppState.room = gameRooms[nextAppState.roomNum];
+                nextAppState.thePlayerCharacter->xpos = WIDTH - 18;
+                nextAppState.levelChange = 5;
+            } else {
+                nextAppState.thePlayerCharacter->xpos--;
+            }
         }
     }
-    if (checkGroundCollision(currentAppState) & GROUND_KILL) {
+    if ((checkGroundCollision(&nextAppState)) & GROUND_KILL) {
         nextAppState.gameOver = 1;
         return nextAppState;
     }

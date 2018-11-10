@@ -5,9 +5,16 @@
 
 #define GROUND_NONE (0)
 #define GROUND_REGULAR (1)
-#define GROUND_KILL (1<<1)
+#define GROUND_KILL (1<<4)
+#define COLLISION_BACK (1<<2)
+#define COLLISION_ADVANCE (1<<3)
 
 #define GROUND_KILL_VALUE (0x107d)
+#define WALL_BACK (0x7680)
+#define WALL_ADVANCE (0x26c4)
+
+#define NUM_ROOMS (3)
+
 typedef struct thechar{
     int xvel;
     int yvel;
@@ -17,7 +24,10 @@ typedef struct thechar{
     int airFrames;
 } Character;
 
-
+typedef struct {
+    const u16 *backgroundImage;
+    const u16 *collisionMap;
+} Room;
 
 typedef struct {
     // Store whether or not the game is over in this member:
@@ -34,8 +44,9 @@ typedef struct {
     *
     */
    Character* thePlayerCharacter;
-   const u16 *backgroundImage;
-   const u16 *collisionMap;
+   Room room;
+   u16 roomNum;
+   u8 levelChange;
 } AppState;
 
 /*
@@ -59,5 +70,4 @@ AppState processAppState(AppState *currentAppState, u32 keysPressedBefore, u32 k
 
 // If you have anything else you need accessible from outside the logic.c
 // file, you can add them here. You likely won't.
-
 #endif
