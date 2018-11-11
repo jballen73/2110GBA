@@ -67,6 +67,7 @@ int main(void) {
         case APP:
             // Process the app for one frame, store the next state
             if (KEY_JUST_PRESSED(BUTTON_SELECT, currentButtons, previousButtons)) {
+                hideSprites();
                 state = START;
                 break;
             }

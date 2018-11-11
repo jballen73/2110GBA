@@ -51,6 +51,9 @@ typedef struct {
     */
    Character* thePlayerCharacter;
    Shot* shot0;
+   Shot* shot1;
+   Shot* shot2;
+   Shot* shot3;
    Room* room;
    u16 roomNum;
    u8 levelChange;
