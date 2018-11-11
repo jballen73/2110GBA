@@ -6,7 +6,7 @@
 // image:
 #include "images/garbage.h"
 #include "images/basicScreen.h"
-#include "images/playerChar.h"
+#include "images/sprites.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,7 +23,7 @@ typedef enum {
 
 int main(void) {
     // TA-TODO: Manipulate REG_DISPCNT here to set Mode 3.
-    REG_DISPCNT = MODE3 | BG2_ENABLE | OBJ_ENABLE | PLAYERCHAR_DIMENSION_TYPE;
+    REG_DISPCNT = MODE3 | BG2_ENABLE | OBJ_ENABLE | SPRITES_DIMENSION_TYPE;
 
     GBAState state = START;
 
@@ -93,6 +93,7 @@ int main(void) {
             waitForVBlank();
 
             // TA-TODO: Draw the exit / gameover screen
+            hideSprites();
             state = START;
             //state = APP_EXIT_NODRAW;
             break;

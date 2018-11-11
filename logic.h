@@ -15,15 +15,21 @@
 
 #define NUM_ROOMS (3)
 
-typedef struct thechar{
+typedef struct {
     int xvel;
     int yvel;
     int xpos;
     int ypos;
     int doubleJump;
     int airFrames;
+    int direction;
 } Character;
-
+typedef struct  {
+    int xpos;
+    int ypos;
+    int inUse;
+    int direction;
+} Shot;
 typedef struct {
     const u16 *backgroundImage;
     const u16 *collisionMap;
@@ -44,7 +50,8 @@ typedef struct {
     *
     */
    Character* thePlayerCharacter;
-   Room room;
+   Shot* shot0;
+   Room* room;
    u16 roomNum;
    u8 levelChange;
 } AppState;
