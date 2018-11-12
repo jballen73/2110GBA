@@ -8,12 +8,14 @@
 #define GROUND_KILL (1<<4)
 #define COLLISION_BACK (1<<2)
 #define COLLISION_ADVANCE (1<<3)
+#define COLLISION_SAVE (1<<5)
 
 #define GROUND_KILL_VALUE (0x107d)
 #define WALL_BACK (0x7680)
 #define WALL_ADVANCE (0x26c4)
+#define SAVE_BLOCK (0x5134)
 
-#define NUM_ROOMS (3)
+#define NUM_ROOMS (4)
 
 typedef struct {
     int xvel;
@@ -34,7 +36,15 @@ typedef struct {
     const u16 *backgroundImage;
     const u16 *collisionMap;
 } Room;
+typedef struct {
 
+    int yvel;
+    int xpos;
+    int ypos;
+    int airFrames;
+    int direction;
+    u16 roomNum;
+} CurrentSave;
 typedef struct {
     // Store whether or not the game is over in this member:
     int gameOver;
@@ -57,6 +67,7 @@ typedef struct {
    Room* room;
    u16 roomNum;
    u8 levelChange;
+   CurrentSave* currentSave;
 } AppState;
 
 /*

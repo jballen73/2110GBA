@@ -14,16 +14,9 @@ volatile OamEntry* playerShot1 = &shadow[2];
 volatile OamEntry* playerShot2 = &shadow[3];
 volatile OamEntry* playerShot3 = &shadow[4];
 void hideSprites(void) {
-    playerCharacter->attr0 = HEIGHT | SPRITES_PALETTE_TYPE | PLAYERCHARACTERSPRITE_SPRITE_SHAPE;
-    playerCharacter->attr1 = WIDTH | PLAYERCHARACTERSPRITE_SPRITE_SIZE;
-    playerShot0->attr0 = HEIGHT | SPRITES_PALETTE_TYPE | PLAYERSHOT_SPRITE_SHAPE;
-    playerShot0->attr1 = WIDTH | PLAYERSHOT_SPRITE_SIZE;
-    playerShot1->attr0 = HEIGHT | SPRITES_PALETTE_TYPE | PLAYERSHOT_SPRITE_SHAPE;
-    playerShot1->attr1 = WIDTH | PLAYERSHOT_SPRITE_SIZE;
-    playerShot2->attr0 = HEIGHT | SPRITES_PALETTE_TYPE | PLAYERSHOT_SPRITE_SHAPE;
-    playerShot2->attr1 = WIDTH | PLAYERSHOT_SPRITE_SIZE;
-    playerShot3->attr0 = HEIGHT | SPRITES_PALETTE_TYPE | PLAYERSHOT_SPRITE_SHAPE;
-    playerShot3->attr1 = WIDTH | PLAYERSHOT_SPRITE_SIZE;
+    for(int i = 0; i < 128; i++) {
+        shadow[i].attr0 = ATTR0_HIDE;
+    }
     drawSprites();
 }
 void graphicsInit(void) {
