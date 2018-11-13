@@ -361,7 +361,7 @@ AppState processAppState(AppState *currentAppState, u32 keysPressedBefore, u32 k
                 nextAppState.thePlayerCharacter->xpos = 2;
                 clearAllShots(&nextAppState);
                 nextAppState.levelChange = 1;
-                if ((nextAppState.roomNum - 5) % 3 == 0) {
+                if (nextAppState.roomNum >= 5 && (nextAppState.roomNum - 5) % 3 == 0) {
                     makeCheckpoint(&nextAppState);
                 }
             } else {
