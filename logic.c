@@ -5,6 +5,8 @@
 #include "images/jumpScreen.h"
 #include "images/tallObstacleScreen.h"
 #include "images/saveScreen.h"
+#include "images/saveJumpScreen.h"
+#include "images/longJumpScreen.h"
 #include <stdlib.h>
 //extern volatile OamEntry* shadow;
 static Room **gameRooms;
@@ -30,11 +32,19 @@ void initializeAppState(AppState* appState) {
     room3->backgroundImage = saveScreen;
     room3->collisionMap = saveScreenCollision;
     gameRooms[3] = room3;
+    Room* room4 = malloc(sizeof(Room));
+    room4->backgroundImage = saveJumpScreen;
+    room4->collisionMap = saveJumpScreenCollision;
+    gameRooms[4] = room4;
+    Room* room5 = malloc(sizeof(Room));
+    room5->backgroundImage = longJumpScreen;
+    room5->collisionMap = longJumpScreenCollision;
+    gameRooms[5] = room5;
 
     Character *newPlayerCharacter =  (Character*)malloc(sizeof(Character));
     newPlayerCharacter->xvel = 0;
     newPlayerCharacter->yvel = 0;
-    newPlayerCharacter->xpos = 30;
+    newPlayerCharacter->xpos = 2;
     newPlayerCharacter->ypos = 100;
     newPlayerCharacter->doubleJump = 1;
     newPlayerCharacter->airFrames = 0;
@@ -66,22 +76,33 @@ void initializeAppState(AppState* appState) {
 
     CurrentSave *initialSave = (CurrentSave*)malloc(sizeof(CurrentSave));
     initialSave->yvel = 0;
-    initialSave->xpos = 30;
+    initialSave->xpos = 2;
     initialSave->ypos = 100;
     initialSave->direction = 1;
     initialSave->airFrames = 0;
     initialSave->roomNum = 0;
+
+    CurrentSave *initialCheckpointSave = (CurrentSave*)malloc(sizeof(CurrentSave));
+    initialCheckpointSave->yvel = 0;
+    initialCheckpointSave->xpos = 2;
+    initialCheckpointSave->ypos = 100;
+    initialCheckpointSave->direction = 1;
+    initialCheckpointSave->airFrames = 0;
+    initialCheckpointSave->roomNum = 0;
 
     appState->thePlayerCharacter = newPlayerCharacter;
     appState->shot0 = newShot0;
     appState->shot1 = newShot1;
     appState->shot2 = newShot2;
     appState->shot3 = newShot3;
-    appState->roomNum = 0;
+    appState->roomNum = STARTING_ROOM;
     appState->room = gameRooms[appState->roomNum];
     appState->gameOver = 0;
+    appState->deathCount = 0;
     appState->levelChange = 0;
+    appState->toSave = 0;
     appState->currentSave = initialSave;
+    appState->checkpointSave = initialCheckpointSave;
 }
 
 // TA-TODO: Add any process functions for sub-elements of your app here.
@@ -203,6 +224,14 @@ static void makeSave(AppState* currentState, AppState* nextState) {
     nextState->currentSave->direction = currentState->thePlayerCharacter->direction;
     nextState->currentSave->airFrames = currentState->thePlayerCharacter->airFrames;
     nextState->currentSave->roomNum = currentState->roomNum;
+    nextState->toSave = 20;
+}
+
+static void makeCheckpoint(AppState* nextState) {
+    nextState->checkpointSave->xpos = 2;
+    nextState->checkpointSave->ypos = 122;
+    nextState->checkpointSave->roomNum = nextState->roomNum;
+    nextState->checkpoint = 20;
 }
 // This function processes your current app state and returns the new (i.e. next)
 // state of your application.
@@ -232,7 +261,13 @@ AppState processAppState(AppState *currentAppState, u32 keysPressedBefore, u32 k
     // UNUSED(keysPressedBefore);
     //UNUSED(keysPressedNow);
     AppState nextAppState = *currentAppState;
-
+    nextAppState.levelChange = 0;
+    if (currentAppState->toSave > 0) {
+        nextAppState.toSave = currentAppState->toSave - 1;
+    }
+    if (currentAppState->checkpoint > 0) {
+        nextAppState.checkpoint = currentAppState->checkpoint - 1;
+    }
     if (KEY_JUST_PRESSED(BUTTON_L, keysPressedNow, keysPressedBefore)) {
         clearAllShots(&nextAppState);
         nextAppState.thePlayerCharacter->xpos = currentAppState->currentSave->xpos;
@@ -243,6 +278,22 @@ AppState processAppState(AppState *currentAppState, u32 keysPressedBefore, u32 k
         nextAppState.roomNum = currentAppState->currentSave->roomNum;
         nextAppState.room = gameRooms[nextAppState.roomNum];
         nextAppState.thePlayerCharacter->doubleJump = 1;
+        nextAppState.levelChange = 1;
+        nextAppState.toSave = 0;
+        return nextAppState;
+    }
+    if (KEY_JUST_PRESSED(BUTTON_B, keysPressedNow, keysPressedBefore)) {
+        clearAllShots(&nextAppState);
+        nextAppState.thePlayerCharacter->xpos = currentAppState->checkpointSave->xpos;
+        nextAppState.thePlayerCharacter->ypos = currentAppState->checkpointSave->ypos;
+        nextAppState.thePlayerCharacter->yvel = 0;
+        nextAppState.thePlayerCharacter->airFrames = 0;
+        nextAppState.thePlayerCharacter->direction = 1;
+        nextAppState.roomNum = currentAppState->checkpointSave->roomNum;
+        nextAppState.room = gameRooms[nextAppState.roomNum];
+        nextAppState.thePlayerCharacter->doubleJump = 1;
+        nextAppState.levelChange = 1;
+        nextAppState.toSave = 0;
         return nextAppState;
     }
     if (KEY_DOWN(BUTTON_LEFT, keysPressedNow) ) {
@@ -264,7 +315,10 @@ AppState processAppState(AppState *currentAppState, u32 keysPressedBefore, u32 k
                 nextAppState.room = gameRooms[nextAppState.roomNum];
                 nextAppState.thePlayerCharacter->xpos = 2;
                 clearAllShots(&nextAppState);
-                nextAppState.levelChange = 5;
+                nextAppState.levelChange = 1;
+                if (nextAppState.roomNum % 5 == 0) {
+                    makeCheckpoint(&nextAppState);
+                }
             } else {
                 nextAppState.thePlayerCharacter->xpos++;
                 nextAppState.thePlayerCharacter->direction = 1;
@@ -275,7 +329,7 @@ AppState processAppState(AppState *currentAppState, u32 keysPressedBefore, u32 k
                 nextAppState.room = gameRooms[nextAppState.roomNum];
                 nextAppState.thePlayerCharacter->xpos = WIDTH - 18;
                 clearAllShots(&nextAppState);
-                nextAppState.levelChange = 5;
+                nextAppState.levelChange = 1;
             } else {
                 nextAppState.thePlayerCharacter->xpos--;
                 nextAppState.thePlayerCharacter->direction = 0;
@@ -283,6 +337,7 @@ AppState processAppState(AppState *currentAppState, u32 keysPressedBefore, u32 k
         }
     }
     if ((checkGroundCollision(&nextAppState)) & GROUND_KILL) {
+        nextAppState.deathCount = currentAppState->deathCount + 1;
         nextAppState.gameOver = 1;
         return nextAppState;
     }
@@ -337,6 +392,40 @@ AppState processAppState(AppState *currentAppState, u32 keysPressedBefore, u32 k
             shotToUse->ypos = currentAppState->thePlayerCharacter->ypos + 4;
             shotToUse->direction = currentAppState->thePlayerCharacter->direction;
         }
+    }
+    return nextAppState;
+}
+AppState processDeadAppState(AppState *currentAppState, u32 keysPressedBefore, u32 keysPressedNow) {
+    AppState nextAppState = *currentAppState;
+    if (KEY_JUST_PRESSED(BUTTON_L, keysPressedNow, keysPressedBefore)) {
+        clearAllShots(&nextAppState);
+        nextAppState.thePlayerCharacter->xpos = currentAppState->currentSave->xpos;
+        nextAppState.thePlayerCharacter->ypos = currentAppState->currentSave->ypos;
+        nextAppState.thePlayerCharacter->yvel = currentAppState->currentSave->yvel;
+        nextAppState.thePlayerCharacter->airFrames = currentAppState->currentSave->airFrames;
+        nextAppState.thePlayerCharacter->direction = currentAppState->currentSave->direction;
+        nextAppState.roomNum = currentAppState->currentSave->roomNum;
+        nextAppState.room = gameRooms[nextAppState.roomNum];
+        nextAppState.thePlayerCharacter->doubleJump = 1;
+        nextAppState.levelChange = 2;
+        nextAppState.toSave = 0;
+        nextAppState.gameOver = 0;
+        return nextAppState;
+    }
+    if (KEY_JUST_PRESSED(BUTTON_B, keysPressedNow, keysPressedBefore)) {
+        clearAllShots(&nextAppState);
+        nextAppState.thePlayerCharacter->xpos = currentAppState->checkpointSave->xpos;
+        nextAppState.thePlayerCharacter->ypos = currentAppState->checkpointSave->ypos;
+        nextAppState.thePlayerCharacter->yvel = 0;
+        nextAppState.thePlayerCharacter->airFrames = 0;
+        nextAppState.thePlayerCharacter->direction = 1;
+        nextAppState.roomNum = currentAppState->checkpointSave->roomNum;
+        nextAppState.room = gameRooms[nextAppState.roomNum];
+        nextAppState.thePlayerCharacter->doubleJump = 1;
+        nextAppState.levelChange = 2;
+        nextAppState.toSave = 0;
+        nextAppState.gameOver = 0;
+        return nextAppState;
     }
     return nextAppState;
 }

@@ -15,7 +15,8 @@
 #define WALL_ADVANCE (0x26c4)
 #define SAVE_BLOCK (0x5134)
 
-#define NUM_ROOMS (4)
+#define NUM_ROOMS (6)
+#define STARTING_ROOM (0)
 
 typedef struct {
     int xvel;
@@ -67,7 +68,11 @@ typedef struct {
    Room* room;
    u16 roomNum;
    u8 levelChange;
+   u8 toSave;
+   u8 checkpoint;
    CurrentSave* currentSave;
+   CurrentSave* checkpointSave;
+   u16 deathCount;
 } AppState;
 
 /*
@@ -89,6 +94,7 @@ void initializeAppState(AppState *appState);
 // This function will be used to process app frames.
 AppState processAppState(AppState *currentAppState, u32 keysPressedBefore, u32 keysPressedNow);
 
+AppState processDeadAppState(AppState *currentAppState, u32 keysPressedBefore, u32 keysPressedNow);
 // If you have anything else you need accessible from outside the logic.c
 // file, you can add them here. You likely won't.
 #endif

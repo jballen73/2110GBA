@@ -6,6 +6,7 @@
 // image:
 #include "images/garbage.h"
 #include "images/basicScreen.h"
+#include "images/deathText.h"
 #include "images/sprites.h"
 
 #include <stdio.h>
@@ -17,7 +18,7 @@ typedef enum {
     START_NODRAW,
     APP_INIT,
     APP,
-    APP_EXIT,
+    APP_DEAD,
     APP_EXIT_NODRAW,
 } GBAState;
 
@@ -80,22 +81,36 @@ int main(void) {
             undrawAppState(&currentAppState);
 
             // Draw the current state
+            if (nextAppState.levelChange) {
+                fullDrawAppState(&nextAppState);
+            }
             drawAppState(&nextAppState);
 
             // Now set the current state as the next state for the next iter.
             currentAppState = nextAppState;
 
             // Check if the app is exiting. If it is, then go to the exit state.
-            if (nextAppState.gameOver) state = APP_EXIT;
+            if (nextAppState.gameOver) {
+                waitForVBlank();
+                fullDrawAppState(&nextAppState);
+                drawAppState(&nextAppState);
+                state = APP_DEAD;
+            }
 
             break;
-        case APP_EXIT:
+        case APP_DEAD:
             // Wait for vblank
             waitForVBlank();
 
             // TA-TODO: Draw the exit / gameover screen
             hideSprites();
-            state = START;
+            drawImageDMA(69, 61, DEATHTEXT_WIDTH, DEATHTEXT_HEIGHT, deathText);
+            nextAppState = processDeadAppState(&currentAppState, previousButtons, currentButtons);
+            if (!nextAppState.gameOver) {
+                fullDrawAppState(&nextAppState);
+                state = APP;
+            }
+            currentAppState = nextAppState;
             //state = APP_EXIT_NODRAW;
             break;
         case APP_EXIT_NODRAW:
