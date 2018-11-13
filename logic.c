@@ -9,6 +9,8 @@
 #include "images/longJumpScreen.h"
 #include "images/spikeScreen.h"
 #include "images/saveLaddering.h"
+#include "images/longReverseJumpScreen.h"
+#include "images/tightSpikeScreen.h"
 #include <stdlib.h>
 //extern volatile OamEntry* shadow;
 static Room **gameRooms;
@@ -50,6 +52,14 @@ void initializeAppState(AppState* appState) {
     room7->backgroundImage = saveLaddering;
     room7->collisionMap = saveLadderingCollision;
     gameRooms[7] = room7;
+    Room* room8 = malloc(sizeof(Room));
+    room8->backgroundImage = longReverseJumpScreen;
+    room8->collisionMap = longReverseJumpScreenCollision;
+    gameRooms[8] = room8;
+    Room* room9 = malloc(sizeof(Room));
+    room9->backgroundImage = tightSpikeScreen;
+    room9->collisionMap = tightSpikeScreenCollision;
+    gameRooms[9] = room9;
 
     Character *newPlayerCharacter =  (Character*)malloc(sizeof(Character));
     newPlayerCharacter->xvel = 0;
@@ -142,9 +152,10 @@ static u16 getBackgroundPixel(AppState *state, int xpos, int ypos) {
 
 static u16 checkGroundCollision(AppState *state) {
     u16 result = 0;
+    int collisionArray[16] = {14,14,14,16,16,16,14,14,14,14,16,16,16,14,14,14};
     for (int i = 0; i < 16; i++) {
         u16 pixel = getBackgroundPixel(state, state->thePlayerCharacter->xpos + i,
-        state->thePlayerCharacter->ypos + 16);
+        state->thePlayerCharacter->ypos + collisionArray[i]);
         result = result | (pixel == 0x0000) | (pixel == SAVE_BLOCK);
         result = result | ((pixel == GROUND_KILL_VALUE) <<4);
         
@@ -350,7 +361,7 @@ AppState processAppState(AppState *currentAppState, u32 keysPressedBefore, u32 k
                 nextAppState.thePlayerCharacter->xpos = 2;
                 clearAllShots(&nextAppState);
                 nextAppState.levelChange = 1;
-                if (nextAppState.roomNum % 5 == 0) {
+                if ((nextAppState.roomNum - 5) % 3 == 0) {
                     makeCheckpoint(&nextAppState);
                 }
             } else {

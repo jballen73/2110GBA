@@ -7,6 +7,7 @@
 #include "images/garbage.h"
 #include "images/basicScreen.h"
 #include "images/deathText.h"
+#include "images/titleScreen.h"
 #include "images/sprites.h"
 
 #include <stdio.h>
@@ -15,7 +16,8 @@
 typedef enum {
     // TA-TODO: Add any additional states you need for your app.
     START,
-    START_NODRAW,
+    START_WAIT_FOR_INPUT,
+    START_AFTER_BUTTON,
     APP_INIT,
     APP,
     APP_DEAD,
@@ -34,6 +36,7 @@ int main(void) {
     // We store the current and previous values of the button input.
     u32 previousButtons = BUTTONS;
     u32 currentButtons = BUTTONS;
+    int startFrameCounter = 0;
     while(1) {
         // Load the current state of the buttons
         currentButtons = BUTTONS;
@@ -46,13 +49,33 @@ int main(void) {
             graphicsInit();
             // TA-TODO: Draw the start state here.
             
-            fillScreenDMA(BLUE);
-            state = START_NODRAW;
+            state = START_WAIT_FOR_INPUT;
             break;
-        case START_NODRAW:
-            // TA-TODO: Check for a button press here to start the app.
-            // Start the app by switching the state to APP_INIT.
+        case START_WAIT_FOR_INPUT:
+            waitForVBlank();
             if (KEY_JUST_PRESSED(BUTTON_START, currentButtons, previousButtons)) {
+                state = START_AFTER_BUTTON;
+                startFrameCounter = 0;
+            }
+            if (vBlankCounter %  30 < 15) {
+                drawFullScreenImageDMA(titleScreenStartText);
+            } else {
+                drawFullScreenImageDMA(titleScreenNoStartText);
+            }
+            break;
+        case START_AFTER_BUTTON:
+            waitForVBlank();
+            if (startFrameCounter < 50) {
+                if (startFrameCounter % 8 < 4) {
+                    drawFullScreenImageDMA(titleScreenStartText);
+                } else {
+                    drawFullScreenImageDMA(titleScreenNoStartText);
+                }
+            } else {
+                drawFullScreenImageDMA(titleScreenStartText);
+            }
+            startFrameCounter++;
+            if (startFrameCounter >= 150) {
                 state = APP_INIT;
             }
             break;
