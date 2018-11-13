@@ -16,7 +16,8 @@ PROGNAME = IWannaBeTheStudent
 # if you have main.c and myLib.c then in the following
 # line you would put main.o and myLib.o
 OFILES = gba.o font.o logic.o graphics.o main.o images/sprites.o images/basicScreen.o images/jumpScreen.o \
-images/tallObstacleScreen.o images/saveScreen.o images/saveJumpScreen.o images/longJumpScreen.o images/deathText.o
+images/tallObstacleScreen.o images/saveScreen.o images/saveJumpScreen.o images/longJumpScreen.o images/deathText.o \
+images/spikeScreen.o images/saveLaddering.o
 
 ################################################################################
 # These are various settings used to make the GBA toolchain work

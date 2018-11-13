@@ -7,6 +7,8 @@
 #include "images/saveScreen.h"
 #include "images/saveJumpScreen.h"
 #include "images/longJumpScreen.h"
+#include "images/spikeScreen.h"
+#include "images/saveLaddering.h"
 #include <stdlib.h>
 //extern volatile OamEntry* shadow;
 static Room **gameRooms;
@@ -40,6 +42,14 @@ void initializeAppState(AppState* appState) {
     room5->backgroundImage = longJumpScreen;
     room5->collisionMap = longJumpScreenCollision;
     gameRooms[5] = room5;
+    Room* room6 = malloc(sizeof(Room));
+    room6->backgroundImage = spikeScreen;
+    room6->collisionMap = spikeScreenCollision;
+    gameRooms[6] = room6;
+    Room* room7 = malloc(sizeof(Room));
+    room7->backgroundImage = saveLaddering;
+    room7->collisionMap = saveLadderingCollision;
+    gameRooms[7] = room7;
 
     Character *newPlayerCharacter =  (Character*)malloc(sizeof(Character));
     newPlayerCharacter->xvel = 0;
@@ -80,7 +90,7 @@ void initializeAppState(AppState* appState) {
     initialSave->ypos = 100;
     initialSave->direction = 1;
     initialSave->airFrames = 0;
-    initialSave->roomNum = 0;
+    initialSave->roomNum = STARTING_ROOM;
 
     CurrentSave *initialCheckpointSave = (CurrentSave*)malloc(sizeof(CurrentSave));
     initialCheckpointSave->yvel = 0;
@@ -88,7 +98,7 @@ void initializeAppState(AppState* appState) {
     initialCheckpointSave->ypos = 100;
     initialCheckpointSave->direction = 1;
     initialCheckpointSave->airFrames = 0;
-    initialCheckpointSave->roomNum = 0;
+    initialCheckpointSave->roomNum = STARTING_ROOM;
 
     appState->thePlayerCharacter = newPlayerCharacter;
     appState->shot0 = newShot0;
@@ -141,12 +151,24 @@ static u16 checkGroundCollision(AppState *state) {
     }
     return result;
 }
+static int checkTopCollision(AppState *state) {
+    int result = 0;
+    int collisionArray[16] = {12, 11, 9, 7, 5, 3, 1, -1, -1, 1, 3, 5, 7, 9, 11, 12};
+    for (int i = 0; i < 16; i++) {
+        u16 pixel = getBackgroundPixel(state, state->thePlayerCharacter->xpos + i, 
+        state->thePlayerCharacter->ypos + collisionArray[i]);
+        result = result | (pixel == 0x0000) | (pixel == SAVE_BLOCK);
+        result = result | ((pixel == GROUND_KILL_VALUE) <<4); 
+    }
+    return result;
+}
 static int checkLeftCollision(AppState *state) {
     int result = 0;
+    int collisionArray[16] = {6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, -1, 3, 2};
     for (int i = 0; i < 16; i++) {
-        u16 pixel = getBackgroundPixel(state, state->thePlayerCharacter->xpos - 1,
+        u16 pixel = getBackgroundPixel(state, state->thePlayerCharacter->xpos + collisionArray[i],
         state->thePlayerCharacter->ypos + i);
-        result = result | (pixel == 0x0000) | ((pixel == GROUND_KILL_VALUE) << 1)
+        result = result | (pixel == 0x0000) | ((pixel == GROUND_KILL_VALUE) << 4)
          | ((pixel == WALL_BACK) << 2) | (pixel == SAVE_BLOCK);
         
     }
@@ -154,10 +176,11 @@ static int checkLeftCollision(AppState *state) {
 }
 static int checkRightCollision(AppState *state) {
     int result = 0;
+    int collisionArray[16] = {9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 16, 12, 13};
     for (int i = 0; i < 16; i++) {
-        u16 pixel = getBackgroundPixel(state, state->thePlayerCharacter->xpos + 16,
+        u16 pixel = getBackgroundPixel(state, state->thePlayerCharacter->xpos + collisionArray[i],
         state->thePlayerCharacter->ypos + i);
-        result = result | (pixel == 0x0000) | ((pixel == GROUND_KILL_VALUE) << 1) 
+        result = result | (pixel == 0x0000) | ((pixel == GROUND_KILL_VALUE) << 4) 
         | ((pixel == WALL_ADVANCE) << 3) | (pixel == SAVE_BLOCK);
         
     }
@@ -175,7 +198,8 @@ static int checkShotCollision(AppState *state, Shot *shot) {
     if (xpos < WIDTH && xpos > 0) {
         for (int i = 0; i < 8; i++) {
             u16 pixel = getBackgroundPixel(state, xpos, shot->ypos + i);
-            result = result | (pixel == 0x0000) | ((pixel == SAVE_BLOCK) << 5);
+            result = result | (pixel == 0x0000) | ((pixel == SAVE_BLOCK) << 5)
+             | ((pixel == GROUND_KILL_VALUE) << 4);
         }
     }
     return result;
@@ -199,7 +223,7 @@ static void updateShot(AppState* currentAppState, AppState* nextAppState, Shot* 
             nextStateShot->inUse = 0;
             nextStateShot->xpos = WIDTH;
 
-        } else if (collisions & GROUND_REGULAR) {
+        } else if (collisions & GROUND_REGULAR || collisions & GROUND_KILL) {
             nextStateShot->inUse = 0;
             nextStateShot->xpos = WIDTH;
         }
@@ -303,11 +327,21 @@ AppState processAppState(AppState *currentAppState, u32 keysPressedBefore, u32 k
     } else {
         nextAppState.thePlayerCharacter->xvel = 0;
     }
+    if (nextAppState.thePlayerCharacter->xvel < 0 && ((checkLeftCollision(currentAppState) & GROUND_KILL))) {
+        nextAppState.deathCount = currentAppState->deathCount + 1;
+        nextAppState.gameOver = 1;
+        return nextAppState;
+    } else if ((nextAppState.thePlayerCharacter->xvel > 0)&& ((checkRightCollision(currentAppState) & GROUND_KILL))) {
+        nextAppState.deathCount = currentAppState->deathCount + 1;
+        nextAppState.gameOver = 1;
+        return nextAppState;
+    }
     if (nextAppState.thePlayerCharacter->xvel < 0 && ((checkLeftCollision(currentAppState) & GROUND_REGULAR))) {
         nextAppState.thePlayerCharacter->xvel = 0;
     } else if ((nextAppState.thePlayerCharacter->xvel > 0)&& ((checkRightCollision(currentAppState) & GROUND_REGULAR))) {
         nextAppState.thePlayerCharacter->xvel = 0;
     }
+    
     if (vBlankCounter % 1 == 0) {
         if (nextAppState.thePlayerCharacter->xvel > 0) {
             if (checkRightCollision(currentAppState) & COLLISION_ADVANCE) {
@@ -365,6 +399,18 @@ AppState processAppState(AppState *currentAppState, u32 keysPressedBefore, u32 k
             nextAppState.thePlayerCharacter->doubleJump = 0;
         }
     }
+    if (nextAppState.thePlayerCharacter->yvel > 0) {
+        int topCollision = checkTopCollision(currentAppState);
+        if (topCollision & GROUND_KILL) {
+            nextAppState.deathCount = currentAppState->deathCount + 1;
+            nextAppState.gameOver = 1;
+            return nextAppState;
+        } else if (topCollision & GROUND_REGULAR) {
+            nextAppState.thePlayerCharacter->yvel = 0;
+            nextAppState.thePlayerCharacter->airFrames = 0;
+        }
+    }
+    
     if (nextAppState.thePlayerCharacter->yvel != 0) {
         int signy = (nextAppState.thePlayerCharacter->yvel > 0) ? 1 : -1;
         if (abs(nextAppState.thePlayerCharacter->yvel) == 2) {
