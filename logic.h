@@ -15,7 +15,7 @@
 #define WALL_ADVANCE (0x26c4)
 #define SAVE_BLOCK (0x5134)
 
-#define NUM_ROOMS (10)
+#define NUM_ROOMS (12)
 #define STARTING_ROOM (0)
 
 typedef struct {

@@ -11,6 +11,8 @@
 #include "images/saveLaddering.h"
 #include "images/longReverseJumpScreen.h"
 #include "images/tightSpikeScreen.h"
+#include "images/manySpikesScreen.h"
+#include "images/snakeSaveJumpScreen.h"
 #include <stdlib.h>
 //extern volatile OamEntry* shadow;
 static Room **gameRooms;
@@ -60,6 +62,14 @@ void initializeAppState(AppState* appState) {
     room9->backgroundImage = tightSpikeScreen;
     room9->collisionMap = tightSpikeScreenCollision;
     gameRooms[9] = room9;
+    Room* room10 = malloc(sizeof(Room));
+    room10->backgroundImage = manySpikesScreen;
+    room10->collisionMap = manySpikesScreenCollision;
+    gameRooms[10] = room10;
+    Room* room11 = malloc(sizeof(Room));
+    room11->backgroundImage = snakeSaveJumpScreen;
+    room11->collisionMap = snakeSaveJumpScreenCollision;
+    gameRooms[11] = room11;
 
     Character *newPlayerCharacter =  (Character*)malloc(sizeof(Character));
     newPlayerCharacter->xvel = 0;
