@@ -15,8 +15,8 @@
 #define WALL_ADVANCE (0x26c4)
 #define SAVE_BLOCK (0x5134)
 
-#define NUM_ROOMS (16)
-#define STARTING_ROOM (14)
+#define NUM_ROOMS (18)
+#define STARTING_ROOM (0)
 
 typedef struct {
     int xvel;
@@ -70,6 +70,7 @@ typedef struct {
    u8 levelChange;
    u8 toSave;
    u8 checkpoint;
+   u8 bossFight;
    CurrentSave* currentSave;
    CurrentSave* checkpointSave;
    u16 deathCount;

@@ -21,7 +21,7 @@ typedef enum {
     APP_INIT,
     APP,
     APP_DEAD,
-    APP_EXIT_NODRAW,
+    APP_BOSS,
 } GBAState;
 
 int main(void) {
@@ -119,7 +119,9 @@ int main(void) {
                 drawAppState(&nextAppState);
                 state = APP_DEAD;
             }
+            if (nextAppState.bossFight) {
 
+            }
             break;
         case APP_DEAD:
             // Wait for vblank

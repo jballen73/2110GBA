@@ -17,6 +17,8 @@
 #include "images/ceilingScreen.h"
 #include "images/mirror1Screen.h"
 #include "images/mirror2Screen.h"
+#include "images/mirror3Screen.h"
+#include "images/mirror4Screen.h"
 #include <stdlib.h>
 //extern volatile OamEntry* shadow;
 static Room **gameRooms;
@@ -90,6 +92,14 @@ void initializeAppState(AppState* appState) {
     room15->backgroundImage =mirror2Screen;
     room15->collisionMap = mirror2ScreenCollision;
     gameRooms[15] = room15;
+    Room* room16 = malloc(sizeof(Room));
+    room16->backgroundImage =mirror3Screen;
+    room16->collisionMap = mirror3ScreenCollision;
+    gameRooms[16] = room16;
+    Room* room17 = malloc(sizeof(Room));
+    room17->backgroundImage =mirror4Screen;
+    room17->collisionMap = mirror4ScreenCollision;
+    gameRooms[17] = room17;
 
     Character *newPlayerCharacter =  (Character*)malloc(sizeof(Character));
     newPlayerCharacter->xvel = 0;
@@ -151,6 +161,7 @@ void initializeAppState(AppState* appState) {
     appState->deathCount = 0;
     appState->levelChange = 0;
     appState->toSave = 0;
+    appState->bossFight = 0;
     appState->currentSave = initialSave;
     appState->checkpointSave = initialCheckpointSave;
 }
@@ -339,8 +350,10 @@ AppState processAppState(AppState *currentAppState, u32 keysPressedBefore, u32 k
     }
     if (KEY_DOWN(BUTTON_LEFT, keysPressedNow) ) {
         nextAppState.thePlayerCharacter->xvel = -1;
+        nextAppState.thePlayerCharacter->direction = 0;
     } else if (KEY_DOWN(BUTTON_RIGHT, keysPressedNow)) {
         nextAppState.thePlayerCharacter->xvel = 1;
+        nextAppState.thePlayerCharacter->direction = 1;
     } else {
         nextAppState.thePlayerCharacter->xvel = 0;
     }
@@ -372,7 +385,6 @@ AppState processAppState(AppState *currentAppState, u32 keysPressedBefore, u32 k
                 }
             } else {
                 nextAppState.thePlayerCharacter->xpos++;
-                nextAppState.thePlayerCharacter->direction = 1;
             }
         } else if ((nextAppState.thePlayerCharacter->xvel < 0)) {
             if (checkLeftCollision(currentAppState) & COLLISION_BACK) {
@@ -383,7 +395,6 @@ AppState processAppState(AppState *currentAppState, u32 keysPressedBefore, u32 k
                 nextAppState.levelChange = 1;
             } else {
                 nextAppState.thePlayerCharacter->xpos--;
-                nextAppState.thePlayerCharacter->direction = 0;
             }
         }
     }
