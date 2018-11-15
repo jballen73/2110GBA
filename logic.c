@@ -15,6 +15,8 @@
 #include "images/snakeSaveJumpScreen.h"
 #include "images/spikeFallScreen.h"
 #include "images/ceilingScreen.h"
+#include "images/mirror1Screen.h"
+#include "images/mirror2Screen.h"
 #include <stdlib.h>
 //extern volatile OamEntry* shadow;
 static Room **gameRooms;
@@ -80,6 +82,14 @@ void initializeAppState(AppState* appState) {
     room13->backgroundImage = ceilingScreen;
     room13->collisionMap = ceilingScreenCollision;
     gameRooms[13] = room13;
+    Room* room14 = malloc(sizeof(Room));
+    room14->backgroundImage =mirror1Screen;
+    room14->collisionMap = mirror1ScreenCollision;
+    gameRooms[14] = room14;
+    Room* room15 = malloc(sizeof(Room));
+    room15->backgroundImage =mirror2Screen;
+    room15->collisionMap = mirror2ScreenCollision;
+    gameRooms[15] = room15;
 
     Character *newPlayerCharacter =  (Character*)malloc(sizeof(Character));
     newPlayerCharacter->xvel = 0;
@@ -286,35 +296,11 @@ static void makeCheckpoint(AppState* nextState) {
     nextState->checkpointSave->xpos = 2;
     nextState->checkpointSave->ypos = 122;
     nextState->checkpointSave->roomNum = nextState->roomNum;
-    nextState->checkpoint = 20;
+    nextState->checkpoint = 40;
 }
 // This function processes your current app state and returns the new (i.e. next)
 // state of your application.
 AppState processAppState(AppState *currentAppState, u32 keysPressedBefore, u32 keysPressedNow) {
-    /* TA-TODO: Do all of your app processing here. This function gets called
-     * every frame.
-     *
-     * To check for key presses, use the KEY_JUST_PRESSED macro for cases where
-     * you want to detect each key press once, or the KEY_DOWN macro for checking
-     * if a button is still down.
-     *
-     * To count time, suppose that the GameBoy runs at a fixed FPS (60fps) and
-     * that vblank is processed once per frame. Use the vBlankCounter variable
-     * and the modulus % operator to do things once every (n) frames. Note that
-     * you want to process button every frame regardless (otherwise you will
-     * miss inputs.)
-     *
-     * Do not do any drawing here.
-     *
-     * TA-TODO: VERY IMPORTANT! READ THIS PART.
-     * You need to perform all calculations on the currentAppState passed to you,
-     * and perform all state updates on the nextAppState state which we define below
-     * and return at the end of the function. YOU SHOULD NOT MODIFY THE CURRENTSTATE.
-     * Modifying the currentAppState will mean the undraw function will not be able
-     * to undraw it later.
-     */
-    // UNUSED(keysPressedBefore);
-    //UNUSED(keysPressedNow);
     AppState nextAppState = *currentAppState;
     nextAppState.levelChange = 0;
     if (currentAppState->toSave > 0) {

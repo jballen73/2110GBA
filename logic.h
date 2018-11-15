@@ -15,8 +15,8 @@
 #define WALL_ADVANCE (0x26c4)
 #define SAVE_BLOCK (0x5134)
 
-#define NUM_ROOMS (14)
-#define STARTING_ROOM (13)
+#define NUM_ROOMS (16)
+#define STARTING_ROOM (14)
 
 typedef struct {
     int xvel;

@@ -19,7 +19,7 @@ OFILES = gba.o font.o logic.o graphics.o main.o images/sprites.o images/basicScr
 images/tallObstacleScreen.o images/saveScreen.o images/saveJumpScreen.o images/longJumpScreen.o images/deathText.o \
 images/spikeScreen.o images/saveLaddering.o images/longReverseJumpScreen.o images/tightSpikeScreen.o \
 images/titleScreen.o images/manySpikesScreen.o images/snakeSaveJumpScreen.o images/spikeFallScreen.o \
-images/ceilingScreen.o
+images/ceilingScreen.o images/mirror1Screen.o images/mirror2Screen.o
 
 ################################################################################
 # These are various settings used to make the GBA toolchain work
