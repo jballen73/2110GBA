@@ -13,6 +13,8 @@
 #include "images/tightSpikeScreen.h"
 #include "images/manySpikesScreen.h"
 #include "images/snakeSaveJumpScreen.h"
+#include "images/spikeFallScreen.h"
+#include "images/ceilingScreen.h"
 #include <stdlib.h>
 //extern volatile OamEntry* shadow;
 static Room **gameRooms;
@@ -70,12 +72,20 @@ void initializeAppState(AppState* appState) {
     room11->backgroundImage = snakeSaveJumpScreen;
     room11->collisionMap = snakeSaveJumpScreenCollision;
     gameRooms[11] = room11;
+    Room* room12 = malloc(sizeof(Room));
+    room12->backgroundImage = spikeFallScreen;
+    room12->collisionMap = spikeFallScreenCollision;
+    gameRooms[12] = room12;
+    Room* room13 = malloc(sizeof(Room));
+    room13->backgroundImage = ceilingScreen;
+    room13->collisionMap = ceilingScreenCollision;
+    gameRooms[13] = room13;
 
     Character *newPlayerCharacter =  (Character*)malloc(sizeof(Character));
     newPlayerCharacter->xvel = 0;
     newPlayerCharacter->yvel = 0;
     newPlayerCharacter->xpos = 2;
-    newPlayerCharacter->ypos = 100;
+    newPlayerCharacter->ypos = 122;
     newPlayerCharacter->doubleJump = 1;
     newPlayerCharacter->airFrames = 0;
     newPlayerCharacter->direction = 1;
@@ -107,7 +117,7 @@ void initializeAppState(AppState* appState) {
     CurrentSave *initialSave = (CurrentSave*)malloc(sizeof(CurrentSave));
     initialSave->yvel = 0;
     initialSave->xpos = 2;
-    initialSave->ypos = 100;
+    initialSave->ypos = 122;
     initialSave->direction = 1;
     initialSave->airFrames = 0;
     initialSave->roomNum = STARTING_ROOM;
@@ -115,7 +125,7 @@ void initializeAppState(AppState* appState) {
     CurrentSave *initialCheckpointSave = (CurrentSave*)malloc(sizeof(CurrentSave));
     initialCheckpointSave->yvel = 0;
     initialCheckpointSave->xpos = 2;
-    initialCheckpointSave->ypos = 100;
+    initialCheckpointSave->ypos = 122;
     initialCheckpointSave->direction = 1;
     initialCheckpointSave->airFrames = 0;
     initialCheckpointSave->roomNum = STARTING_ROOM;
