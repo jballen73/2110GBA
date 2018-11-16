@@ -21,6 +21,7 @@ typedef enum {
     APP_INIT,
     APP,
     APP_DEAD,
+    APP_BOSS_INIT,
     APP_BOSS,
 } GBAState;
 
@@ -120,14 +121,13 @@ int main(void) {
                 state = APP_DEAD;
             }
             if (nextAppState.bossFight) {
-
+                state = APP_BOSS_INIT;
             }
             break;
         case APP_DEAD:
             // Wait for vblank
             waitForVBlank();
 
-            // TA-TODO: Draw the exit / gameover screen
             hideSprites();
             drawImageDMA(69, 61, DEATHTEXT_WIDTH, DEATHTEXT_HEIGHT, deathText);
             nextAppState = processDeadAppState(&currentAppState, previousButtons, currentButtons);
@@ -136,11 +136,32 @@ int main(void) {
                 state = APP;
             }
             currentAppState = nextAppState;
-            //state = APP_EXIT_NODRAW;
             break;
-        case APP_EXIT_NODRAW:
-            // TA-TODO: Check for a button press here to go back to the start screen
+        case APP_BOSS_INIT:
+            nextAppState = initializeBossAppState(&currentAppState);
+            waitForVBlank();
+            hideSprites();
+            fullDrawBossAppState(&nextAppState);
+            state = APP_BOSS;
+            currentAppState = nextAppState;
+            break;
+        case APP_BOSS:
+        if (KEY_JUST_PRESSED(BUTTON_SELECT, currentButtons, previousButtons)) {
+                hideSprites();
+                state = START;
+                break;
+            }
+            nextAppState = processBossAppState(&currentAppState, previousButtons, currentButtons);
+            waitForVBlank();
+            drawBossAppState(&nextAppState);
 
+            currentAppState = nextAppState;
+            if (nextAppState.gameOver) {
+                waitForVBlank();
+                fullDrawAppState(&nextAppState);
+                drawAppState(&nextAppState);
+                state = APP_DEAD;
+            }
             break;
         }
 

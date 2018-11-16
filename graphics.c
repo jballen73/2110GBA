@@ -1,6 +1,7 @@
 #include "graphics.h"
 #include "gba.h"
 #include "images/sprites.h"
+#include "images/bossScreen.h"
 #include "logic.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,6 +19,7 @@ volatile OamEntry* playerShot3 = &shadow[4];
 volatile OamEntry* deathCountText = &shadow[5];
 volatile OamEntry* savedText = &shadow[6];
 volatile OamEntry* checkpointText = &shadow[7];
+volatile OamEntry* sonicBoss = &shadow[8];
 void hideSprites(void) {
     for(int i = 0; i < 128; i++) {
         shadow[i].attr0 = ATTR0_HIDE;
@@ -62,6 +64,9 @@ void graphicsInit(void) {
 
     checkpointText = &shadow[7];
     checkpointText->attr2 = CHECKPOINTTEXT_PALETTE_ID | CHECKPOINTTEXT_ID;
+
+    sonicBoss = &shadow[8];
+    sonicBoss->attr2 = SONICSPRITES0_PALETTE_ID | SONICSPRITES0_ID;
 }
 // TA-TODO: Add any draw/undraw functions for sub-elements of your app here.
 // For example, for a snake game, you could have a drawSnake function
@@ -128,6 +133,21 @@ static void drawPlayer(int xpos, int ypos) {
     playerCharacter->attr1 = (xpos&0x01FF) | PLAYERCHARACTERSPRITE_SPRITE_SIZE;
     
 }
+static void drawBoss(Boss *boss) {
+    sonicBoss->attr0 = (boss->ypos & 0x00FF) | SPRITES_PALETTE_TYPE | SONICSPRITES_SPRITE_SHAPE;
+    sonicBoss->attr1 = (boss->xpos & 0x00FF) | SONICSPRITES_SPRITE_SIZE | (!boss->direction ? ATTR1_HFLIP : 0);
+    if (boss->spriteNum) {
+        sonicBoss->attr2 = SONICSPRITES1_PALETTE_ID | SONICSPRITES1_ID;
+    } else {
+        sonicBoss->attr2 = SONICSPRITES0_PALETTE_ID | SONICSPRITES0_ID;
+    }
+}
+static void drawBossHealthBar(Boss *boss) {
+    drawRectDMA(0, 0, 240, 10, WHITE);
+    if (boss->health > 0) {
+        drawRectDMA(0, 0, boss->health * 4, 10, MAGENTA);
+    }
+}
 static void drawSprites(void) {
     DMA[3].src = shadow;
     DMA[3].dst = OAMMEM;
@@ -172,5 +192,19 @@ void drawAppState(AppState *state) {
     itoa(state->deathCount, deathString, 10);
     drawCenteredString(200, 4, 50, 20, deathString, BLACK);
 }
-
+void fullDrawBossAppState(AppState *state) {
+    drawFullScreenImageDMA(bossScreen);
+    drawBossAppState(state);
+}
+void drawBossAppState(AppState *state) {
+    drawPlayer(state->thePlayerCharacter->xpos, state->thePlayerCharacter->ypos);
+    
+    drawShot0(state->shot0->xpos, state->shot0->ypos, state->shot0->direction);
+    drawShot1(state->shot1->xpos, state->shot1->ypos, state->shot1->direction);
+    drawShot2(state->shot2->xpos, state->shot2->ypos, state->shot2->direction);
+    drawShot3(state->shot3->xpos, state->shot3->ypos, state->shot3->direction);
+    drawBoss(state->boss);
+    drawSprites();
+    drawBossHealthBar(state->boss);
+}
 

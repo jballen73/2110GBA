@@ -16,7 +16,8 @@
 #define SAVE_BLOCK (0x5134)
 
 #define NUM_ROOMS (18)
-#define STARTING_ROOM (0)
+#define STARTING_ROOM (17)
+
 
 typedef struct {
     int xvel;
@@ -47,6 +48,15 @@ typedef struct {
     u16 roomNum;
 } CurrentSave;
 typedef struct {
+    int ypos;
+    int xpos;
+    int spriteNum;
+    int width;
+    int height;
+    int direction;
+    int health;
+} Boss;
+typedef struct {
     // Store whether or not the game is over in this member:
     int gameOver;
 
@@ -74,6 +84,7 @@ typedef struct {
    CurrentSave* currentSave;
    CurrentSave* checkpointSave;
    u16 deathCount;
+   Boss* boss;
 } AppState;
 
 /*
@@ -91,10 +102,10 @@ typedef struct {
 */
 // This function can initialize an unused AppState struct.
 void initializeAppState(AppState *appState);
-
+AppState initializeBossAppState(AppState *currentAppState);
 // This function will be used to process app frames.
 AppState processAppState(AppState *currentAppState, u32 keysPressedBefore, u32 keysPressedNow);
-
+AppState processBossAppState(AppState *currentAppState, u32 keysPressedBefore, u32 keysPressedNow);
 AppState processDeadAppState(AppState *currentAppState, u32 keysPressedBefore, u32 keysPressedNow);
 // If you have anything else you need accessible from outside the logic.c
 // file, you can add them here. You likely won't.

@@ -19,9 +19,11 @@
 #include "images/mirror2Screen.h"
 #include "images/mirror3Screen.h"
 #include "images/mirror4Screen.h"
+#include "images/bossScreen.h"
 #include <stdlib.h>
 //extern volatile OamEntry* shadow;
 static Room **gameRooms;
+static int sonicSpriteHeights[2] = {30, 42};
 static void makeSave(AppState* currentState, AppState* nextState);
 void initializeAppState(AppState* appState) {
     // TA-TODO: Initialize everything that's part of this AppState struct here.
@@ -100,6 +102,10 @@ void initializeAppState(AppState* appState) {
     room17->backgroundImage =mirror4Screen;
     room17->collisionMap = mirror4ScreenCollision;
     gameRooms[17] = room17;
+    Room* room18 = malloc(sizeof(Room));
+    room18->backgroundImage =bossScreen;
+    room18->collisionMap = bossScreenCollision;
+    gameRooms[18] = room18;
 
     Character *newPlayerCharacter =  (Character*)malloc(sizeof(Character));
     newPlayerCharacter->xvel = 0;
@@ -164,6 +170,7 @@ void initializeAppState(AppState* appState) {
     appState->bossFight = 0;
     appState->currentSave = initialSave;
     appState->checkpointSave = initialCheckpointSave;
+    appState->boss = NULL;
 }
 
 // TA-TODO: Add any process functions for sub-elements of your app here.
@@ -238,7 +245,18 @@ static int checkRightCollision(AppState *state) {
     }
     return result;
 }
+static int checkBossCollision(AppState *state) {
+    Character* c = state->thePlayerCharacter;
+    if ((c->xpos > state->boss->xpos && (c->xpos) < (state->boss->xpos + state->boss->width))
+        || ((c->xpos + 16) > state->boss->xpos && (c->xpos + 16) < (state->boss->xpos + state->boss->width))) {
+        if ((c->ypos > state->boss->ypos && c->ypos < (state->boss->ypos + state->boss->height)) || 
+            (c->ypos + 16 > state->boss->ypos && c->ypos + 16 < (state->boss->ypos + state->boss->height))) {
+            return 1;
+        }
+    }
+    return 0;
 
+}
 static int checkShotCollision(AppState *state, Shot *shot) {
     int result = 0;
     int xpos;
@@ -252,6 +270,26 @@ static int checkShotCollision(AppState *state, Shot *shot) {
             u16 pixel = getBackgroundPixel(state, xpos, shot->ypos + i);
             result = result | (pixel == 0x0000) | ((pixel == SAVE_BLOCK) << 5)
              | ((pixel == GROUND_KILL_VALUE) << 4);
+        }
+    }
+    return result;
+}
+
+static int checkBossShotCollision(AppState *state, Shot *shot) {
+    int result = 0;
+    int xpos;
+    if (shot->direction) {
+        xpos = shot->xpos + 8;
+    } else {
+        xpos = shot->xpos - 1;
+    }
+    if (xpos < WIDTH && xpos > 0) {
+        if ((shot->xpos > state->boss->xpos && (shot->xpos) < (state->boss->xpos + state->boss->width))
+        || ((shot->xpos + 8) > state->boss->xpos && (shot->xpos + 8) < (state->boss->xpos + state->boss->width))) {
+            if ((shot->ypos > state->boss->ypos && shot->ypos < (state->boss->ypos + state->boss->height)) || 
+            (shot->ypos + 8 > state->boss->ypos && shot->ypos + 8 < (state->boss->ypos + state->boss->height))) {
+                result = 1;
+            }
         }
     }
     return result;
@@ -281,7 +319,26 @@ static void updateShot(AppState* currentAppState, AppState* nextAppState, Shot* 
         }
     }
 }
-
+static void updateBossShot(AppState* currentAppState,AppState* nextAppState, Shot* currStateShot, Shot* nextStateShot) {
+    if (currStateShot->inUse) {
+        if (currStateShot->xpos >= WIDTH || currStateShot->xpos < 0) {
+            nextStateShot->inUse = 0;
+            nextStateShot->xpos = WIDTH;
+        } else {
+            if (currStateShot->direction) {
+                nextStateShot->xpos = currStateShot->xpos + 2;
+            } else {
+                nextStateShot->xpos = currStateShot->xpos - 2;
+            }
+        }
+        int collisions = checkBossShotCollision(currentAppState, currStateShot);
+        if (collisions) {
+            nextStateShot->xpos = WIDTH;
+            nextStateShot->inUse = 0;
+            nextAppState->boss->health--;
+        }
+    }
+}
 static void clearAllShots(AppState* nextState) {
     nextState->shot0->inUse = 0;
     nextState->shot0->xpos = WIDTH;
@@ -375,13 +432,16 @@ AppState processAppState(AppState *currentAppState, u32 keysPressedBefore, u32 k
     if (vBlankCounter % 1 == 0) {
         if (nextAppState.thePlayerCharacter->xvel > 0) {
             if (checkRightCollision(currentAppState) & COLLISION_ADVANCE) {
-                nextAppState.roomNum = (currentAppState->roomNum + 1) % NUM_ROOMS;
+                nextAppState.roomNum = (currentAppState->roomNum + 1);
                 nextAppState.room = gameRooms[nextAppState.roomNum];
                 nextAppState.thePlayerCharacter->xpos = 2;
                 clearAllShots(&nextAppState);
                 nextAppState.levelChange = 1;
                 if (nextAppState.roomNum >= 5 && (nextAppState.roomNum - 5) % 3 == 0) {
                     makeCheckpoint(&nextAppState);
+                }
+                if (nextAppState.roomNum == NUM_ROOMS) {
+                    nextAppState.bossFight = 1;
                 }
             } else {
                 nextAppState.thePlayerCharacter->xpos++;
@@ -484,6 +544,7 @@ AppState processDeadAppState(AppState *currentAppState, u32 keysPressedBefore, u
         nextAppState.levelChange = 2;
         nextAppState.toSave = 0;
         nextAppState.gameOver = 0;
+        nextAppState.bossFight = 0;
         return nextAppState;
     }
     if (KEY_JUST_PRESSED(BUTTON_B, keysPressedNow, keysPressedBefore)) {
@@ -499,7 +560,113 @@ AppState processDeadAppState(AppState *currentAppState, u32 keysPressedBefore, u
         nextAppState.levelChange = 2;
         nextAppState.toSave = 0;
         nextAppState.gameOver = 0;
+        nextAppState.bossFight = 0;
         return nextAppState;
     }
+    return nextAppState;
+}
+AppState initializeBossAppState(AppState *currentAppState) {
+    AppState nextAppState = *currentAppState;
+    Boss *newBoss = malloc(sizeof(Boss));
+    newBoss->xpos = 200;
+    newBoss->ypos = 96;
+    newBoss->width = 32;
+    newBoss->height = sonicSpriteHeights[1];
+    newBoss->spriteNum = 1;
+    newBoss->direction = 0;
+    newBoss->health = 60;
+    nextAppState.boss = newBoss;
+    return nextAppState;
+}
+
+AppState processBossAppState(AppState *currentAppState, u32 keysPressedBefore, u32 keysPressedNow) {
+    AppState nextAppState = *currentAppState;
+    if (KEY_DOWN(BUTTON_LEFT, keysPressedNow) ) {
+        nextAppState.thePlayerCharacter->xvel = -1;
+        nextAppState.thePlayerCharacter->direction = 0;
+    } else if (KEY_DOWN(BUTTON_RIGHT, keysPressedNow)) {
+        nextAppState.thePlayerCharacter->xvel = 1;
+        nextAppState.thePlayerCharacter->direction = 1;
+    } else {
+        nextAppState.thePlayerCharacter->xvel = 0;
+    }
+    if (nextAppState.thePlayerCharacter->xvel < 0 && ((checkLeftCollision(currentAppState) & GROUND_REGULAR))) {
+        nextAppState.thePlayerCharacter->xvel = 0;
+    } else if ((nextAppState.thePlayerCharacter->xvel > 0)&& ((checkRightCollision(currentAppState) & GROUND_REGULAR))) {
+        nextAppState.thePlayerCharacter->xvel = 0;
+    }
+    if (checkBossCollision(currentAppState)) {
+        nextAppState.deathCount = currentAppState->deathCount + 1;
+        nextAppState.gameOver = 1;
+        return nextAppState;
+    }
+    if (nextAppState.thePlayerCharacter->xvel > 0) {
+        nextAppState.thePlayerCharacter->xpos++;
+    } else if ((nextAppState.thePlayerCharacter->xvel < 0)) {
+        nextAppState.thePlayerCharacter->xpos--;
+    }
+    
+    
+    if (checkGroundCollision(currentAppState) & GROUND_REGULAR) {
+        nextAppState.thePlayerCharacter->yvel = 0;
+        nextAppState.thePlayerCharacter->doubleJump = 1;
+    } else {
+        if (currentAppState->thePlayerCharacter->airFrames >= 10) {
+            nextAppState.thePlayerCharacter->yvel--;
+            if (nextAppState.thePlayerCharacter->yvel < -2) {
+                nextAppState.thePlayerCharacter->yvel = -2;
+            }
+            nextAppState.thePlayerCharacter->airFrames = 0;
+        } else {
+            nextAppState.thePlayerCharacter->airFrames++;
+        }
+    }
+    if (KEY_JUST_PRESSED(BUTTON_A, keysPressedNow, keysPressedBefore)) {
+        if (checkGroundCollision(currentAppState)) {
+            nextAppState.thePlayerCharacter->yvel = 2;
+            nextAppState.thePlayerCharacter->airFrames = 0;
+        } else if (currentAppState->thePlayerCharacter->doubleJump) {
+            nextAppState.thePlayerCharacter->yvel = 2;
+            nextAppState.thePlayerCharacter->airFrames = 0;
+            nextAppState.thePlayerCharacter->doubleJump = 0;
+        }
+    }
+    
+    if (nextAppState.thePlayerCharacter->yvel != 0) {
+        int signy = (nextAppState.thePlayerCharacter->yvel > 0) ? 1 : -1;
+        if (abs(nextAppState.thePlayerCharacter->yvel) == 2) {
+            nextAppState.thePlayerCharacter->ypos -= signy;
+        } else {
+            if (nextAppState.thePlayerCharacter->airFrames % 2 == 0) {
+                nextAppState.thePlayerCharacter->ypos -=signy;
+            }
+        }
+    }
+    if (KEY_JUST_PRESSED(BUTTON_B, keysPressedNow, keysPressedBefore)) {
+        nextAppState.boss->spriteNum = currentAppState->boss->spriteNum ^ 1;
+        nextAppState.boss->height = sonicSpriteHeights[nextAppState.boss->spriteNum];
+        nextAppState.boss->ypos += (nextAppState.boss->spriteNum ? -12 : 12);
+        nextAppState.boss->health -= 2;
+    }
+    updateBossShot(currentAppState, &nextAppState, currentAppState->shot0, nextAppState.shot0);
+    updateBossShot(currentAppState, &nextAppState, currentAppState->shot1, nextAppState.shot1);
+    updateBossShot(currentAppState, &nextAppState, currentAppState->shot2, nextAppState.shot2);
+    updateBossShot(currentAppState, &nextAppState, currentAppState->shot3, nextAppState.shot3);
+
+    if (KEY_JUST_PRESSED(BUTTON_R, keysPressedNow, keysPressedBefore)) {
+        Shot* shotToUse = getAvailableShot(currentAppState, &nextAppState);
+        if (shotToUse != NULL) {
+            shotToUse->inUse = 1;
+            if (currentAppState->thePlayerCharacter->direction) {
+                shotToUse->xpos = currentAppState->thePlayerCharacter->xpos + 8;
+            } else {
+                shotToUse->xpos = currentAppState->thePlayerCharacter->xpos - 8;
+            }
+            shotToUse->ypos = currentAppState->thePlayerCharacter->ypos + 4;
+            shotToUse->direction = currentAppState->thePlayerCharacter->direction;
+        }
+    }
+
+
     return nextAppState;
 }
