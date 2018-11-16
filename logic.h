@@ -15,8 +15,8 @@
 #define WALL_ADVANCE (0x26c4)
 #define SAVE_BLOCK (0x5134)
 
-#define NUM_ROOMS (18)
-#define STARTING_ROOM (17)
+#define NUM_ROOMS (19)
+#define STARTING_ROOM (0)
 
 
 typedef struct {
@@ -50,11 +50,17 @@ typedef struct {
 typedef struct {
     int ypos;
     int xpos;
+    int xvel;
+    int yvel;
+    int airFrames;
     int spriteNum;
     int width;
     int height;
     int direction;
     int health;
+    int attack;
+    int attackCount;
+    int lagFrames;
 } Boss;
 typedef struct {
     // Store whether or not the game is over in this member:

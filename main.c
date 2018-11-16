@@ -9,6 +9,7 @@
 #include "images/deathText.h"
 #include "images/titleScreen.h"
 #include "images/sprites.h"
+#include "images/credits.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,6 +24,7 @@ typedef enum {
     APP_DEAD,
     APP_BOSS_INIT,
     APP_BOSS,
+    APP_CREDITS,
 } GBAState;
 
 int main(void) {
@@ -37,7 +39,7 @@ int main(void) {
     // We store the current and previous values of the button input.
     u32 previousButtons = BUTTONS;
     u32 currentButtons = BUTTONS;
-    int startFrameCounter = 0;
+    int frameCounter = 0;
     while(1) {
         // Load the current state of the buttons
         currentButtons = BUTTONS;
@@ -56,7 +58,7 @@ int main(void) {
             waitForVBlank();
             if (KEY_JUST_PRESSED(BUTTON_START, currentButtons, previousButtons)) {
                 state = START_AFTER_BUTTON;
-                startFrameCounter = 0;
+                frameCounter = 0;
             }
             if (vBlankCounter %  30 < 15) {
                 drawFullScreenImageDMA(titleScreenStartText);
@@ -66,8 +68,8 @@ int main(void) {
             break;
         case START_AFTER_BUTTON:
             waitForVBlank();
-            if (startFrameCounter < 50) {
-                if (startFrameCounter % 8 < 4) {
+            if (frameCounter < 50) {
+                if (frameCounter % 8 < 4) {
                     drawFullScreenImageDMA(titleScreenStartText);
                 } else {
                     drawFullScreenImageDMA(titleScreenNoStartText);
@@ -75,8 +77,8 @@ int main(void) {
             } else {
                 drawFullScreenImageDMA(titleScreenStartText);
             }
-            startFrameCounter++;
-            if (startFrameCounter >= 150) {
+            frameCounter++;
+            if (frameCounter >= 150) {
                 state = APP_INIT;
             }
             break;
@@ -159,10 +161,27 @@ int main(void) {
             if (nextAppState.gameOver) {
                 waitForVBlank();
                 fullDrawAppState(&nextAppState);
+                free(nextAppState.boss);
                 drawAppState(&nextAppState);
                 state = APP_DEAD;
             }
+            if (nextAppState.boss->health == 0) {
+                hideSprites();
+                state = APP_CREDITS;
+                frameCounter = 0;
+            }
             break;
+        case APP_CREDITS:
+            if (KEY_JUST_PRESSED(BUTTON_SELECT, currentButtons, previousButtons)) {
+                hideSprites();
+                state = START;
+                break;
+            }
+            waitForVBlank();
+            drawScrollingFullScreenImageDMA(credits, frameCounter);
+            if (frameCounter < CREDITS_HEIGHT - HEIGHT && vBlankCounter % 4 == 0) {
+                frameCounter++;
+            }
         }
 
         // Store the current state of the buttons

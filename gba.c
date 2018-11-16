@@ -51,6 +51,11 @@ void drawFullScreenImageDMA(const u16 *image) {
     DMA[3].cnt = (WIDTH*HEIGHT) | DMA_DESTINATION_INCREMENT | DMA_SOURCE_INCREMENT | DMA_ON | DMA_NOW;
 }
 
+void drawScrollingFullScreenImageDMA(const u16 *image, int rowOffset) {
+    DMA[3].dst = videoBuffer;
+    DMA[3].src = image + WIDTH*rowOffset;
+    DMA[3].cnt = (WIDTH*HEIGHT) | DMA_DESTINATION_INCREMENT | DMA_SOURCE_INCREMENT | DMA_ON | DMA_NOW;
+}
 void drawImageDMA(int x, int y, int width, int height, const u16 *image) {
     // TA-TODO: IMPLEMENT
     for (int i = 0; i < height; i++) {

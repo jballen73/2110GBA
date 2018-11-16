@@ -19,6 +19,7 @@
 #include "images/mirror2Screen.h"
 #include "images/mirror3Screen.h"
 #include "images/mirror4Screen.h"
+#include "images/saveScreenNoText.h"
 #include "images/bossScreen.h"
 #include <stdlib.h>
 //extern volatile OamEntry* shadow;
@@ -102,10 +103,19 @@ void initializeAppState(AppState* appState) {
     room17->backgroundImage =mirror4Screen;
     room17->collisionMap = mirror4ScreenCollision;
     gameRooms[17] = room17;
-    Room* room18 = malloc(sizeof(Room));
-    room18->backgroundImage =bossScreen;
-    room18->collisionMap = bossScreenCollision;
-    gameRooms[18] = room18;
+
+
+
+    Room* preBossRoom = malloc(sizeof(Room));
+    preBossRoom->backgroundImage = saveScreenNoText;
+    preBossRoom->collisionMap = saveScreenCollision;
+    gameRooms[NUM_ROOMS - 1] = preBossRoom;
+
+
+    Room* bossRoom = malloc(sizeof(Room));
+    bossRoom->backgroundImage =bossScreen;
+    bossRoom->collisionMap = bossScreenCollision;
+    gameRooms[NUM_ROOMS] = bossRoom;
 
     Character *newPlayerCharacter =  (Character*)malloc(sizeof(Character));
     newPlayerCharacter->xvel = 0;
@@ -575,10 +585,106 @@ AppState initializeBossAppState(AppState *currentAppState) {
     newBoss->spriteNum = 1;
     newBoss->direction = 0;
     newBoss->health = 60;
+    newBoss->xvel = 0;
+    newBoss->yvel = 0;
+    newBoss->airFrames = 0;
+    newBoss->attack = 0;
+    newBoss->attackCount = 0;
+    newBoss->lagFrames = 0;
     nextAppState.boss = newBoss;
     return nextAppState;
 }
-
+void processBoss(AppState *currentAppState, AppState* nextAppState) {
+    if (currentAppState->boss->lagFrames > 0) {
+        nextAppState->boss->lagFrames--;
+        return;
+    }
+    if (currentAppState->boss->attack == 0) {
+        if (currentAppState->boss->direction) {
+            nextAppState->boss->xpos = 0;
+            if (!currentAppState->boss->spriteNum) {
+                    nextAppState->boss->spriteNum = 1;
+                    nextAppState->boss->height = sonicSpriteHeights[nextAppState->boss->spriteNum];
+                    nextAppState->boss->ypos += (nextAppState->boss->spriteNum ? -12 : 12);
+            }
+        } else {
+            nextAppState->boss->xpos = WIDTH - 32;
+            if (!currentAppState->boss->spriteNum) {
+                nextAppState->boss->spriteNum = 1;
+                nextAppState->boss->height = sonicSpriteHeights[nextAppState->boss->spriteNum];
+                nextAppState->boss->ypos += (nextAppState->boss->spriteNum ? -12 : 12);
+            }
+        }
+        nextAppState->boss->attack = 2;
+        nextAppState->boss->attackCount = 3;
+        nextAppState->boss->lagFrames = 45;
+        return;
+    }
+    if (currentAppState->boss->attack == 2) {
+        if (currentAppState->boss->attackCount == 0) {
+            nextAppState->boss->attack = 0;
+            return;
+        }
+        if (currentAppState->boss->direction) {
+            nextAppState->boss->xpos = 0;
+            if (currentAppState->boss->spriteNum) {
+                    nextAppState->boss->spriteNum = 0;
+                    nextAppState->boss->height = sonicSpriteHeights[nextAppState->boss->spriteNum];
+                    nextAppState->boss->ypos += (nextAppState->boss->spriteNum ? -12 : 12);
+            }
+            
+        } else {
+            nextAppState->boss->xpos = WIDTH - 32;
+            if (currentAppState->boss->spriteNum) {
+                nextAppState->boss->spriteNum = 0;
+                nextAppState->boss->height = sonicSpriteHeights[nextAppState->boss->spriteNum];
+                nextAppState->boss->ypos += (nextAppState->boss->spriteNum ? -12 : 12);
+            }
+            
+        }
+        nextAppState->boss->attack = 1;
+        nextAppState->boss->lagFrames = 60;
+        return;
+    }
+    if (currentAppState->boss->attack == 1) {
+        if (currentAppState->boss->attackCount == 0) {
+            nextAppState->boss->attack = 0;
+        } else {
+            if (currentAppState->boss->direction == 0 && currentAppState->boss->xpos < 0) {
+                nextAppState->boss->attackCount--;
+                nextAppState->boss->direction = 1;
+                nextAppState->boss->lagFrames = 60;
+                nextAppState->boss->xvel = 0;
+                nextAppState->boss->attack = 2;
+                if (!currentAppState->boss->spriteNum) {
+                    nextAppState->boss->spriteNum = 1;
+                    nextAppState->boss->height = sonicSpriteHeights[nextAppState->boss->spriteNum];
+                    nextAppState->boss->ypos += (nextAppState->boss->spriteNum ? -12 : 12);
+                }
+            } else if (currentAppState->boss->direction == 1 && currentAppState->boss->xpos > WIDTH) {
+                nextAppState->boss->attackCount--;
+                nextAppState->boss->direction = 0;
+                nextAppState->boss->lagFrames = 60;
+                nextAppState->boss->xvel = 0;
+                nextAppState->boss->attack = 2;
+                if (!currentAppState->boss->spriteNum) {
+                    nextAppState->boss->spriteNum = 1;
+                    nextAppState->boss->height = sonicSpriteHeights[nextAppState->boss->spriteNum];
+                    nextAppState->boss->ypos += (nextAppState->boss->spriteNum ? -12 : 12);
+                }
+            } else {
+                nextAppState->boss->xvel = 12 * (nextAppState->boss->direction ? 1 : -1);
+                if (currentAppState->boss->spriteNum) {
+                    nextAppState->boss->spriteNum = 0;
+                    nextAppState->boss->height = sonicSpriteHeights[nextAppState->boss->spriteNum];
+                    nextAppState->boss->ypos += (nextAppState->boss->spriteNum ? -12 : 12);
+                }
+            }
+        }
+        nextAppState->boss->xpos += nextAppState->boss->xvel;
+        return;
+    }
+}
 AppState processBossAppState(AppState *currentAppState, u32 keysPressedBefore, u32 keysPressedNow) {
     AppState nextAppState = *currentAppState;
     if (KEY_DOWN(BUTTON_LEFT, keysPressedNow) ) {
@@ -643,16 +749,14 @@ AppState processBossAppState(AppState *currentAppState, u32 keysPressedBefore, u
         }
     }
     if (KEY_JUST_PRESSED(BUTTON_B, keysPressedNow, keysPressedBefore)) {
-        nextAppState.boss->spriteNum = currentAppState->boss->spriteNum ^ 1;
-        nextAppState.boss->height = sonicSpriteHeights[nextAppState.boss->spriteNum];
-        nextAppState.boss->ypos += (nextAppState.boss->spriteNum ? -12 : 12);
-        nextAppState.boss->health -= 2;
+        nextAppState.boss->attack = 2;
+        nextAppState.boss->attackCount = 3;
     }
     updateBossShot(currentAppState, &nextAppState, currentAppState->shot0, nextAppState.shot0);
     updateBossShot(currentAppState, &nextAppState, currentAppState->shot1, nextAppState.shot1);
     updateBossShot(currentAppState, &nextAppState, currentAppState->shot2, nextAppState.shot2);
     updateBossShot(currentAppState, &nextAppState, currentAppState->shot3, nextAppState.shot3);
-
+    processBoss(currentAppState, &nextAppState);
     if (KEY_JUST_PRESSED(BUTTON_R, keysPressedNow, keysPressedBefore)) {
         Shot* shotToUse = getAvailableShot(currentAppState, &nextAppState);
         if (shotToUse != NULL) {

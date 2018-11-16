@@ -40,8 +40,8 @@ void graphicsInit(void) {
         shadow[i].attr0 = ATTR0_HIDE;
     }
     playerCharacter = &shadow[0];
-    playerCharacter->attr0 = 50 | SPRITES_PALETTE_TYPE | PLAYERCHARACTERSPRITE_SPRITE_SHAPE;
-    playerCharacter->attr1 = 50 | PLAYERCHARACTERSPRITE_SPRITE_SIZE;
+    // playerCharacter->attr0 = 50 | SPRITES_PALETTE_TYPE | PLAYERCHARACTERSPRITE_SPRITE_SHAPE;
+    // playerCharacter->attr1 = 50 | PLAYERCHARACTERSPRITE_SPRITE_SIZE;
     playerCharacter->attr2 = PLAYERCHARACTERSPRITE_PALETTE_ID | PLAYERCHARACTERSPRITE_ID;
 
     playerShot0 = &shadow[1];
