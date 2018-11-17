@@ -30,7 +30,7 @@ void initializeAppState(AppState* appState) {
     // TA-TODO: Initialize everything that's part of this AppState struct here.
     // Suppose the struct contains random values, make sure everything gets
     // the value it should have when the app begins.
-    gameRooms = malloc(NUM_ROOMS * sizeof(Room));
+    gameRooms = malloc((NUM_ROOMS + 1) * sizeof(Room));
     Room* room0 = malloc(sizeof(Room));
     room0->backgroundImage = basicScreen;
     room0->collisionMap = basicScreenCollision;

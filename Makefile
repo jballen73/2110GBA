@@ -75,7 +75,7 @@ med : $(PROGNAME).gba
 .PHONY : submit
 submit: clean
 	@rm -f submission.tar.gz
-	@tar czvf submission.tar.gz $(wildcard *)
+	@tar czvf submission.tar.gz *
 
 .PHONY : clean
 clean :
