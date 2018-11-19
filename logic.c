@@ -528,13 +528,13 @@ AppState processAppState(AppState *currentAppState, u32 keysPressedBefore, u32 k
         Shot* shotToUse = getAvailableShot(currentAppState, &nextAppState);
         if (shotToUse != NULL) {
             shotToUse->inUse = 1;
-            if (currentAppState->thePlayerCharacter->direction) {
+            if (nextAppState.thePlayerCharacter->direction) {
                 shotToUse->xpos = currentAppState->thePlayerCharacter->xpos + 8;
             } else {
                 shotToUse->xpos = currentAppState->thePlayerCharacter->xpos - 8;
             }
             shotToUse->ypos = currentAppState->thePlayerCharacter->ypos + 4;
-            shotToUse->direction = currentAppState->thePlayerCharacter->direction;
+            shotToUse->direction = nextAppState.thePlayerCharacter->direction;
         }
     }
     return nextAppState;
